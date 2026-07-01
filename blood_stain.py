@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 @dataclass
 class BloodStain:
-
     id: int
 
     center_x: float
@@ -15,10 +14,9 @@ class BloodStain:
 
     ellipse: tuple
 
+    area: float
+    perimeter: float
+
     direction_angle: float = None
-
-    area: float = 0
-
-    perimeter: float = 0
 
     confidence: float = 1.0
