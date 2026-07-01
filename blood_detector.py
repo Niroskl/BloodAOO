@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from blood_stain import BloodStain
+
 
 class BloodDetector:
 
@@ -22,10 +24,12 @@ class BloodDetector:
 
         kernel = np.ones((3,3), np.uint8)
 
-        mask = cv2.morphologyEx(mask,
-                                cv2.MORPH_OPEN,
-                                kernel,
-                                iterations=2)
+        mask = cv2.morphologyEx(
+            mask,
+            cv2.MORPH_OPEN,
+            kernel,
+            iterations=2
+        )
 
         contours, _ = cv2.findContours(
             mask,
@@ -35,38 +39,48 @@ class BloodDetector:
 
         stains = []
 
-        for c in contours:
+        for contour in contours:
 
-            area = cv2.contourArea(c)
+            area = cv2.contourArea(contour)
 
             if area < self.min_area:
                 continue
 
-            if len(c) < 5:
+            if len(contour) < 5:
                 continue
 
-            ellipse = cv2.fitEllipse(c)
+            perimeter = cv2.arcLength(contour, True)
+
+            ellipse = cv2.fitEllipse(contour)
 
             (cx, cy), (MA, ma), angle = ellipse
 
             major = max(MA, ma)
             minor = min(MA, ma)
 
-            impact = np.degrees(
-                np.arcsin(
-                    np.clip(minor / major, 0, 1)
-                )
+            ratio = np.clip(minor / major, 0, 1)
+
+            impact = np.degrees(np.arcsin(ratio))
+
+            stain = BloodStain(
+
+                id=len(stains)+1,
+
+                center_x=cx,
+                center_y=cy,
+
+                major_axis=major,
+                minor_axis=minor,
+
+                impact_angle=impact,
+
+                ellipse=ellipse,
+
+                area=area,
+                perimeter=perimeter
+
             )
 
-            stains.append({
-
-                "center_x": cx,
-                "center_y": cy,
-                "major": major,
-                "minor": minor,
-                "impact_angle": impact,
-                "ellipse": ellipse
-
-            })
+            stains.append(stain)
 
         return stains
